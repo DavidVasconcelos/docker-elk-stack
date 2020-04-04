@@ -1,0 +1,112 @@
+version: '3.3'
+
+services:
+  elasticsearch01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:$ELK_VERSION
+    container_name: elasticsearch01  
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: changeme
+      ES_HOME: "/usr/share/elasticsearch"      
+      node.name: elasticsearch01
+      discovery.seed_hosts: elasticsearch02,elasticsearch03
+      cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+    networks:
+      - elk
+  
+  elasticsearch02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:$ELK_VERSION
+    container_name: elasticsearch02    
+    ports:
+      - "9201:9201"
+      - "9301:9301"
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: changeme
+      ES_HOME: "/usr/share/elasticsearch"     
+      node.name: elasticsearch02
+      discovery.seed_hosts: elasticsearch01,elasticsearch03
+      cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+    networks:
+      - elk
+
+  elasticsearch03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:$ELK_VERSION
+    container_name: elasticsearch03    
+    ports:
+      - "9202:9202"
+      - "9302:9302"
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: changeme
+      ES_HOME: "/usr/share/elasticsearch"     
+      node.name: elasticsearch03
+      discovery.seed_hosts: elasticsearch01,elasticsearch02
+      cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+    networks:
+      - elk
+
+  logstash:
+    container_name: logstash
+    build:
+      context: logstash/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./logstash/config/logstash.yml
+        target: /usr/share/logstash/config/logstash.yml
+        read_only: true
+      - type: bind
+        source: ./logstash/pipeline
+        target: /usr/share/logstash/pipeline
+        read_only: true
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch01
+
+  kibana:
+    container_name: kibana
+    build:
+      context: kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch01
+
+networks:
+  elk:
+    driver: bridge
+
+volumes:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
