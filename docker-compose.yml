@@ -8,12 +8,16 @@ services:
       - "9200:9200"
       - "9300:9300"
     volumes:
+      - type: bind
+        source: ./elasticsearch/config/elasticsearch01.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true      
       - data01:/usr/share/elasticsearch/data
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
       ELASTIC_PASSWORD: changeme
       ES_HOME: "/usr/share/elasticsearch"      
-      node.name: elasticsearch01
+      node.name: elasticsearch01      
       discovery.seed_hosts: elasticsearch02,elasticsearch03
       cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
     networks:
@@ -26,6 +30,10 @@ services:
       - "9201:9201"
       - "9301:9301"
     volumes:
+      - type: bind
+        source: ./elasticsearch/config/elasticsearch02.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true      
       - data02:/usr/share/elasticsearch/data
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
@@ -44,6 +52,10 @@ services:
       - "9202:9202"
       - "9302:9302"
     volumes:
+      - type: bind
+        source: ./elasticsearch/config/elasticsearch03.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true      
       - data03:/usr/share/elasticsearch/data
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
